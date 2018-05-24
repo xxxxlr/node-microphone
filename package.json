@@ -9,7 +9,7 @@
       "email": "its@jiajian.me"
     }
   ],
-  "dependencies": {
+  "dependencies_not_using": {
     "lame": "1.0.3"
   },
   "devDependencies": {},
