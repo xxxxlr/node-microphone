@@ -3,7 +3,7 @@ var spawn = require('child_process').spawn
 var PassThrough = require('stream').PassThrough;
 // var lame = require('lame');
 
-var ps = null;
+var _ps = null;
 
 var audio = new PassThrough;
 var info = new PassThrough;
@@ -14,7 +14,6 @@ var start = function (options) {
     options.recordProgram = options.recordProgram || 'rec'
     options.sampleRate = options.sampleRate || 16000
     options.cmdOptions = options.cmdOptions || {}
-    let ps = null
     switch (options.recordProgram) {
         case 'rec':
             // let cmdOptions = { encoding: 'binary' }
@@ -33,7 +32,7 @@ var start = function (options) {
                 // 'silence', '1', '0.1', options.thresholdStart || options.threshold + '%',
                 // '1', options.silence, options.thresholdEnd || options.threshold + '%'
             ]
-            ps = spawn(
+            _ps = spawn(
                 options.recordProgram,
                 options.cmdArgs,
                 options.cmdOptions)
@@ -50,12 +49,12 @@ var start = function (options) {
             console.error('Only support the following programs: rec, sox, arecord')
             break;
 
-            ps = spawn(options.recordProgram,
+            _ps = spawn(options.recordProgram,
                 options.cmdArgs,
                 options.cmdOptions);
             console.log(`raw command line: ${options.recordProgram} ${options.cmdArgs.join(' ')}`)
     }
-    if (ps !== null) {
+    if (_ps !== null) {
         if (options.mp3output === true) {
             var encoder = new lame.Encoder({
                 channels: 2,
@@ -63,13 +62,13 @@ var start = function (options) {
                 sampleRate: 44100
             });
 
-            ps.stdout.pipe(encoder);
+            _ps.stdout.pipe(encoder);
             encoder.pipe(audio);
-            ps.stderr.pipe(info);
+            _ps.stderr.pipe(info);
 
         } else {
-            ps.stdout.pipe(audio);
-            ps.stderr.pipe(info);
+            _ps.stdout.pipe(audio);
+            _ps.stderr.pipe(info);
 
         }
     }
@@ -77,9 +76,9 @@ var start = function (options) {
 };
 
 var stop = function () {
-    if (ps) {
-        ps.kill();
-        ps = null;
+    if (_ps) {
+        _ps.kill();
+        _ps = null;
     }
 };
 
