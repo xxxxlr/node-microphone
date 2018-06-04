@@ -5,10 +5,13 @@ var PassThrough = require('stream').PassThrough;
 
 var _ps = null;
 
-var audio = new PassThrough;
-var info = new PassThrough;
+// var audioStream = new PassThrough;
+// var info = new PassThrough;
 
 var start = function (options) {
+    audioStream = new PassThrough;
+    errorStream = new PassThrough;
+    // let _ps = null;
     options = options || {};
     options.device = options['device'] || 'default'
     options.recordProgram = options.recordProgram || 'rec'
@@ -32,10 +35,6 @@ var start = function (options) {
                 // 'silence', '1', '0.1', options.thresholdStart || options.threshold + '%',
                 // '1', options.silence, options.thresholdEnd || options.threshold + '%'
             ]
-            _ps = spawn(
-                options.recordProgram,
-                options.cmdArgs,
-                options.cmdOptions)
             break;
         case 'sox':
             options.cmdArgs = options.cmdArgs || ['-d', '-t', 'dat', '-p']
@@ -49,12 +48,15 @@ var start = function (options) {
             console.error('Only support the following programs: rec, sox, arecord')
             break;
 
-            _ps = spawn(options.recordProgram,
-                options.cmdArgs,
-                options.cmdOptions);
-            console.log(`raw command line: ${options.recordProgram} ${options.cmdArgs.join(' ')}`)
+
     }
+    _ps = spawn(options.recordProgram,
+        options.cmdArgs,
+        options.cmdOptions);
+    console.log(`raw command line: ${options.recordProgram} ${options.cmdArgs.join(' ')}`)
+
     if (_ps !== null) {
+        console.warn(`${options.recordProgram} pid: ${_ps.pid}`)
         if (options.mp3output === true) {
             var encoder = new lame.Encoder({
                 channels: 2,
@@ -63,26 +65,29 @@ var start = function (options) {
             });
 
             _ps.stdout.pipe(encoder);
-            encoder.pipe(audio);
-            _ps.stderr.pipe(info);
+            encoder.pipe(audioStream);
+            _ps.stderr.pipe(errorStream);
 
         } else {
-            _ps.stdout.pipe(audio);
-            _ps.stderr.pipe(info);
+            _ps.stdout.pipe(audioStream);
+            _ps.stderr.pipe(errorStream);
 
         }
     }
-    // return ps
+    return [audioStream, errorStream]
 };
 
 var stop = function () {
     if (_ps) {
+        console.warn('stop recording')
         _ps.kill();
         _ps = null;
+    } else {
+        console.warn('No recording in progress')
     }
 };
 
-exports.audioStream = audio;
-exports.infoStream = info;
+// exports.audioStream = audio;
+// exports.infoStream = info;
 exports.startCapture = start;
 exports.stopCapture = stop;
