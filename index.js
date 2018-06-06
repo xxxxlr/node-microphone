@@ -55,8 +55,15 @@ var start = function (options) {
         options.cmdOptions);
     console.log(`raw command line: ${options.recordProgram} ${options.cmdArgs.join(' ')}`)
 
+
+
     if (_ps !== null) {
-        console.warn(`${options.recordProgram} pid: ${_ps.pid}`)
+        console.log(`${options.recordProgram} pid: ${_ps.pid}`)
+
+        _ps.on('exit', function (code, signal) {
+            console.log(`Exited audio recording with code ${code} and signal ${signal}`);
+        });
+
         if (options.mp3output === true) {
             var encoder = new lame.Encoder({
                 channels: 2,
@@ -79,13 +86,14 @@ var start = function (options) {
 
 var stop = function () {
     if (_ps) {
-        console.warn('stop recording')
+        console.info('Stopping streaming')
         _ps.kill();
         _ps = null;
     } else {
-        console.warn('No recording in progress')
+        console.info('No recording streaming in progress')
     }
 };
+
 
 // exports.audioStream = audio;
 // exports.infoStream = info;
